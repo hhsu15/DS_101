@@ -210,14 +210,45 @@ y_test.value_counts().head(1) / len(y_test)  # assume the first one is the most 
 ```
 
 
-```
+```python`
 # Calculate predicted probabilities of class membership.
 knn.predict_proba(X)
 
+```
 
+To measure the performance of different k, we can collect the data for training error (1 - accuracy) and testing error. If the training error is lower than testing error then the model is likely to be overfitting.
 
+To find the optimal k, we can use GridSearchCV, e.g., 
+
+```python
+# This is very helpful!!!
+
+from sklearn.model_selection import GridSearchCV
+
+knn = KNeighborsClassifier()
+param_grid = {'n_neighbors':[1,2,3,4,5,6,7,8,10],
+#               'parameter2':[1,2,3,4]
+             }
+gs = GridSearchCV(estimator=knn,
+                  param_grid = param_grid,
+                  cv=5
+                 )
+gs.fit(X,y)
 
 ```
 
+Standardize the scale is very important because for example KNN uses Euclidean distance metric so to determine coloseness the squared sum has to make sense, i.e., have the same scale across axises.
+
+We can use StandardScaler to standardize data.
+```python
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.fit_transform(X_test)
 
 ```
+
+### Logistic Regression
+
+
