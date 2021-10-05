@@ -251,4 +251,306 @@ X_test = scaler.fit_transform(X_test)
 
 ### Logistic Regression
 
+Logistic regression uses elements from both Linear regression and knn algo.
 
+Since the values output from a linear regression cannot be interpreted as probabilities of class membership since the value can be greater than 1 and less than 0. Logistic regression on the other hand ensures that the values output as predictions can be interpreted as probabilities of class membership.
+
+```python
+from sklearn.linear_model import LogisticRegression
+
+logreg = LogisticRegression()
+
+feature_cols = ['al']
+X = glass[feature_cols]
+y = glass.household
+
+logreg.fit(X,y)
+pred = logreg.predict(X)
+
+```
+
+In addtion to the class prediction, logistic regression is very helpful in terms of predicting probabilities.
+
+```python
+logreg.predict_proba(X) # return a list  of probabilities for 0 and 1, e.g., [ 0.97193375,  0.02806625]
+
+```
+
+#### Probability, Odds Ratio, e, Log, and Log Odds
+
+prob = one outcome/all outcomes
+odds = one outcome / all other outcomes
+
+- Dice roll of 1: probability = 1/6, odds = 1/5
+- Even dice roll: probability = 3/6, odds = 3/3 = 1
+- Dice roll less than 5: probability = 4/6, odds = 4/2 = 2
+
+```python
+# Create a table of probability versus odds.
+table = pd.DataFrame({'probability':[0.0, 0.1, 0.2, 0.25, 0.5, 0.6, 0.8, 0.9,1.0]})
+table['odds'] = table.probability/(1 - table.probability)
+table
+
+```
+
+#### e and natural log
+
+What is e? It is the base rate of growth shared by all continually growing processes:
+
+- 2.718281828459
+
+e is what is Eulers number and is irrational and is the base of the natural log, `ln`.b
+
+What is a (natural) log? It gives you the time needed to reach a certain level of growth.
+
+#### The Log Odds Ratio
+
+You can the logarithm of the odds ratio and you get what's known as log odds. 
+
+Odds ratio can never be negative.
+
+Log odds has the range from negative inf to positive inf.
+
+
+```python
+# Add log odds to the table.
+import numpy as np
+table['logodds'] = np.log(table['odds'])
+table
+
+```
+
+Logistic regress uses log odds as a categorical response being true is modeled as a linear combination of the features. 
+
+$$\log \left({p\over 1-p}\right) = \beta_0 + \beta_1x$$
+
+- So Logistic regression outputs the probabilities of a specific class.
+- Those probabilities can be converted into class predictions.
+
+## NLP
+
+Task example: text classification (positive feedback or nagative), text extraction (understand topics)
+
+In data science, we are often asked to analyze unstructured text or make a predictive model using it. Unfortunately, most data science techniques require numeric data. NLP libraries provide a tool set of methods to convert unstructured text into meaningful numeric data.
+
+#### Lower level components
+
+- Tokenization: word token, sentences, n-grams
+- Stop-words removal
+- Stemming and lemmatization: root word
+- TD-IDF: word importance
+- Part of speech tagging: noun/verb/adjective
+- Named Entity Recognition (NER): person/organization/location
+- Word sense disambiguation: buy a mouse
+- Segmentation: "New York city subway"
+- Languge detection: "translate this page"
+- Machine learning: specialized models that work well with text
+
+Naive Bayes is a popular algo for text classification.
+
+Set up the dependencies,
+```python
+import pandas as pd
+import numpy as np
+import scipy as sp
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB         # Naive Bayes
+from sklearn.linear_model import LogisticRegression
+from sklearn import metrics
+from textblob import TextBlob, Word
+from nltk.stem.snowball import SnowballStemmer
+
+%matplotlib inline
+
+```
+We may want to identify:
+
+Is an article a sports or business story?
+Does an email have positive or negative sentiment?
+Is the rating of a recipe 1, 2, 3, 4, or 5 stars?
+
+
+#### CountVectorizer
+
+We will use CountVectorizer to convert each document into a set of words and their counts, just the the collections.Counter. 
+So you don't have to do it mannually. You can use vect.vocabulary_to see the actual word counts.
+
+```python
+# Use CountVectorizer to create document-term matrices from X_train and X_test.
+# Use default options for CountVectorizer.
+vect = CountVectorizer()
+
+# Create document-term matrices.
+X_train_dtm = vect.fit_transform(X_train)
+X_test_dtm = vect.transform(X_test)
+
+# Use Naive Bayes to predict the star rating.
+nb = MultinomialNB()
+nb.fit(X_train_dtm, y_train)
+y_pred_class = nb.predict(X_test_dtm)
+
+# Calculate accuracy.
+print(metrics.accuracy_score(y_test, y_pred_class))
+```
+
+Get the base line accuracy (assuming model always predicts the top category)
+```python
+# calculate null accuracy
+y_test_binary = np.where(y_test==5, 1, 0) # five stars become 1, one stars become 0
+print 'Percent 5 Stars:', y_test_binary.mean()
+print 'Percent 1 Stars:', 1 - y_test_binary.mean()
+
+```
+
+#### Common preprocessing techniques
+
+- N-Grams 
+
+This can lead to more feature columns.
+```python
+
+# Include 1-grams and 2-grams.
+vect = CountVectorizer(ngram_range=(1, 2))
+X_train_dtm = vect.fit_transform(X_train)
+X_train_dtm.shape
+```
+
+- remove stop words
+
+```python
+# Remove English stop words.
+vect = CountVectorizer(stop_words='english')
+vect.get_params()
+vect.get_stop_words()
+```
+
+You can also specify max features
+```python
+# order by term frequency
+# Remove English stop words and only keep 100 features.
+vect = CountVectorizer(stop_words='english', max_features=100)
+tokenize_test(vect)
+
+```
+
+#### You can use TextBlob to analyze and process the text
+
+```python
+review = TextBlob(yelp_best_worst.text[0])
+
+# List the words.
+review.words
+
+# List the sentences.
+review.sentences
+
+# Some string methods are available.
+review.lower()
+
+stemmer = SnowballStemmer('english')
+
+# Stem each word.
+print([stemmer.stem(word) for word in review.words])
+
+# Assume every word is a noun. This is in textbolb
+print([word.lemmatize() for word in review.words])
+
+# Assume every word is a verb.
+print([word.lemmatize(pos='v') for word in review.words])
+
+
+#### Term Frequency-Inverse Document Frequency (TF-IDF)
+
+While a Count Vectorizer simply totals up the number of times a "word" appears in a document, the more complex TF-IDF Vectorizer analyzes the uniqueness of words between documents to find distinguishing characteristics.
+
+Term frequency–inverse document frequency (TF–IDF) computes the "relative frequency" with which a word appears in a document, compared to its frequency across all documents.
+
+It's more useful than "term frequency" for identifying "important" words in each document (high frequency in that document, low frequency in other documents).
+
+It's used for search-engine scoring, text summarization, and document clustering.
+
+```python
+# Example documents
+simple_train = ['call you tonight', 'Call me a cab', 'please call me... PLEASE!']
+
+# Term frequency 
+vect = CountVectorizer()
+tf = pd.DataFrame(vect.fit_transform(simple_train).toarray(), columns=vect.get_feature_names())
+tf
+
+# Document frequency (each word appears in how many documents)
+vect = CountVectorizer(binary=True)
+df = vect.fit_transform(simple_train).toarray().sum(axis=0)
+pd.DataFrame(df.reshape(1, 6), columns=vect.get_feature_names())
+```
+
+```python
+# Term frequency–inverse document frequency (simple version)
+tf/df
+
+```
+
+The higher the TF–IDF value, the more "important" the word is to that specific document. Here, "cab" is the most important and unique word in document 1, while "please" is the most important and unique word in document 2. TF–IDF is often used for training as a replacement for word count.
+
+```python
+# TfidfVectorizer
+vect = TfidfVectorizer()
+pd.DataFrame(vect.fit_transform(simple_train).toarray(), columns=vect.get_feature_names())
+
+```
+
+Often time, the TfidfVectorizer is better than simple CountVectorizer.
+
+Example analysis:
+```python
+# Create a document-term matrix using TF–IDF.
+vect = TfidfVectorizer(stop_words='english')
+
+# Fit transform Yelp data.
+dtm = vect.fit_transform(yelp.text)
+features = vect.get_feature_names()
+
+def summarize():
+    
+    # Choose a random review that is at least 300 characters.
+    review_length = 0
+    while review_length < 300:
+        review_id = np.random.randint(0, len(yelp))
+        review_text = yelp.text[review_id]
+        #review_text = unicode(yelp.text[review_id], 'utf-8')
+        review_length = len(review_text)
+    
+    # Create a dictionary of words and their TF–IDF scores.
+    word_scores = {}
+    for word in TextBlob(review_text).words:
+        word = word.lower()
+        if word in features:
+            word_scores[word] = dtm[review_id, features.index(word)]
+    
+    # Print words with the top five TF–IDF scores.
+    print('TOP SCORING WORDS:')
+    top_scores = sorted(word_scores.items(), key=lambda x: x[1], reverse=True)[:5]
+    for word, score in top_scores:
+        print(word)
+    
+    # Print five random words.
+    print('\n' + 'RANDOM WORDS:')
+    random_words = np.random.choice(list(word_scores.keys()), size=5, replace=False)
+    for word in random_words:
+        print(word)
+    
+    # Print the review.
+    print('\n' + review_text)
+
+#### Sentiment Analysis
+
+```python
+# Define a function that accepts text and returns the polarity.
+def detect_sentiment(text):
+    return TextBlob(text.decode('utf-8')).sentiment.polarity
+    #return TextBlob(text).sentiment.polarity
+
+```
+
+```
