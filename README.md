@@ -542,6 +542,7 @@ def summarize():
     
     # Print the review.
     print('\n' + review_text)
+```
 
 #### Sentiment Analysis
 
@@ -553,4 +554,3 @@ def detect_sentiment(text):
 
 ```
 
-```
